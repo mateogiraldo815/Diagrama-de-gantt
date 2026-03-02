@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Gantt - PG1 Primer Semestre</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .gantt-wrapper {
+            overflow-x: auto;
+            padding: 20px;
+        }
+
+        .gantt-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        .gantt-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .gantt-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .gantt-table tbody tr {
+            border-bottom: 1px solid #dee2e6;
+            transition: background-color 0.3s ease;
+        }
+
+        .gantt-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .gantt-table td {
+            padding: 12px 15px;
+            font-size: 13px;
+        }
+
+        /* Fases */
+        .fase-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .fase-header td {
+            padding: 10px 15px;
+        }
+
+        /* Columnas de datos */
+        .col-task {
+            width: 250px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .col-dates {
+            width: 120px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .col-duration {
+            width: 80px;
+            text-align: center;
+            color: #666;
+        }
+
+        .col-responsible {
+            width: 120px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Área de barras Gantt */
+        .gantt-bar-container {
+            position: relative;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .gantt-bar {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .gantt-bar:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Colores por fase */
+        .gantt-bar.fase1 {
+            background: linear-gradient(90deg, #FF6B6B 0%, #FF8E8E 100%);
+        }
+
+        .gantt-bar.fase2 {
+            background: linear-gradient(90deg, #4ECDC4 0%, #6FE3DC 100%);
+        }
+
+        .gantt-bar.fase3 {
+            background: linear-gradient(90deg, #FFD93D 0%, #FFE66D 100%);
+            color: #333;
+        }
+
+        .gantt-bar.fase4 {
+            background: linear-gradient(90deg, #95E1D3 0%, #B8F3E8 100%);
+            color: #333;
+        }
+
+        /* Timeline header */
+        .timeline-header {
+            display: flex;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .timeline-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .legend-color.fase1 {
+            background: linear-gradient(90deg, #FF6B6B 0%, #FF8E8E 100%);
+        }
+
+        .legend-color.fase2 {
+            background: linear-gradient(90deg, #4ECDC4 0%, #6FE3DC 100%);
+        }
+
+        .legend-color.fase3 {
+            background: linear-gradient(90deg, #FFD93D 0%, #FFE66D 100%);
+        }
+
+        .legend-color.fase4 {
+            background: linear-gradient(90deg, #95E1D3 0%, #B8F3E8 100%);
+        }
+
+        .summary {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            font-size: 13px;
+        }
+
+        .summary h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .summary p {
+            margin: 8px 0;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Diagrama de Gantt - Primer Semestre (PG1)</h1>
+            <p>Proyecto de Tesis: Plataforma Educativa de Programación Visual</p>
+        </div>
+
+        <div class="gantt-wrapper">
+            <table class="gantt-table">
+                <thead>
+                    <tr>
+                        <th class="col-task">Tarea</th>
+                        <th class="col-dates">Inicio - Fin</th>
+                        <th class="col-duration">Duración</th>
+                        <th class="col-responsible">Responsable</th>
+                        <th style="min-width: 600px;">Cronograma (Feb - Jul 2026)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- FASE I -->
+                    <tr class="fase-header">
+                        <td colspan="5">🔍 FASE I – Fundamentación (Investigación y Marco Teórico)</td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Revisión sistemática de literatura (Scopus y bases académicas)</td>
+                        <td class="col-dates">23/02 - 15/03</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase1" style="width: 25%; margin-left: 2%;" title="23/02 - 15/03">Revisión literatura</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Construcción de matriz de análisis de artículos</td>
+                        <td class="col-dates">02/03 - 22/03</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase1" style="width: 25%; margin-left: 5%;" title="02/03 - 22/03">Matriz análisis</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Definición del problema, objetivos y alcance</td>
+                        <td class="col-dates">09/03 - 29/03</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase1" style="width: 25%; margin-left: 7%;" title="09/03 - 29/03">Definición</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Redacción del marco teórico y estado del arte</td>
+                        <td class="col-dates">16/03 - 05/04</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase1" style="width: 25%; margin-left: 10%;" title="16/03 - 05/04">Marco teórico</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- FASE II -->
+                    <tr class="fase-header">
+                        <td colspan="5">🏗️ FASE II – Diseño del Sistema (Ingeniería de Software)</td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Definición de requerimientos funcionales, no funcionales e información</td>
+                        <td class="col-dates">06/04 - 19/04</td>
+                        <td class="col-duration">2 sem</td>
+                        <td class="col-responsible">Tesista / Desarrollador</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase2" style="width: 18%; margin-left: 15%;" title="06/04 - 19/04">Requerimientos</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Diseño de la arquitectura del sistema</td>
+                        <td class="col-dates">13/04 - 26/04</td>
+                        <td class="col-duration">2 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase2" style="width: 18%; margin-left: 17%;" title="13/04 - 26/04">Arquitectura</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Elaboración de diagramas UML</td>
+                        <td class="col-dates">20/04 - 03/05</td>
+                        <td class="col-duration">2 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase2" style="width: 18%; margin-left: 19%;" title="20/04 - 03/05">Diagramas UML</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Diseño de wireframes de la plataforma</td>
+                        <td class="col-dates">27/04 - 10/05</td>
+                        <td class="col-duration">2 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase2" style="width: 18%; margin-left: 21%;" title="27/04 - 10/05">Wireframes</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- FASE III -->
+                    <tr class="fase-header">
+                        <td colspan="5">⚙️ FASE III – Construcción del MVP (Desarrollo de Software)</td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Configuración del entorno de desarrollo</td>
+                        <td class="col-dates">11/05 - 17/05</td>
+                        <td class="col-duration">1 sem</td>
+                        <td class="col-responsibility">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 9%; margin-left: 23%;" title="11/05 - 17/05">Entorno</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Desarrollo del módulo tablero y robot interactivo</td>
+                        <td class="col-dates">11/05 - 31/05</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 27%; margin-left: 23%;" title="11/05 - 31/05">Tablero</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Implementación del sistema de bloques de instrucciones</td>
+                        <td class="col-dates">18/05 - 07/06</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 27%; margin-left: 25%;" title="18/05 - 07/06">Bloques</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Desarrollo del motor de ejecución</td>
+                        <td class="col-dates">25/05 - 14/06</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 27%; margin-left: 27%;" title="25/05 - 14/06">Motor</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Desarrollo de los niveles progresivos</td>
+                        <td class="col-dates">01/06 - 21/06</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 27%; margin-left: 29%;" title="01/06 - 21/06">Niveles</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Implementación del sistema de estadísticas</td>
+                        <td class="col-dates">08/06 - 26/06</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 27%; margin-left: 31%;" title="08/06 - 26/06">Estadísticas</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Implementación de roles (estudiante y administrador)</td>
+                        <td class="col-dates">08/06 - 26/06</td>
+                        <td class="col-duration">3 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase3" style="width: 27%; margin-left: 31%;" title="08/06 - 26/06">Roles</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- FASE IV -->
+                    <tr class="fase-header">
+                        <td colspan="5">✅ FASE IV – Pruebas y Cierre (Entrega de MVP)</td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Pruebas funcionales del sistema</td>
+                        <td class="col-dates">22/06 - 28/06</td>
+                        <td class="col-duration">1 sem</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase4" style="width: 9%; margin-left: 36%;" title="22/06 - 28/06">Testing</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Corrección de errores y ajustes finales</td>
+                        <td class="col-dates">25/06 - 29/06</td>
+                        <td class="col-duration">5 días</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase4" style="width: 6%; margin-left: 37%;" title="25/06 - 29/06">Correcciones</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-task">Despliegue del MVP en servidor</td>
+                        <td class="col-dates">26/06 - 30/06</td>
+                        <td class="col-duration">5 días</td>
+                        <td class="col-responsible">Tesista</td>
+                        <td>
+                            <div class="gantt-bar-container">
+                                <div class="gantt-bar fase4" style="width: 6%; margin-left: 37%;" title="26/06 - 30/06">Deploy</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color fase1"></div>
+                <span><strong>Fase I:</strong> Fundamentación</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color fase2"></div>
+                <span><strong>Fase II:</strong> Diseño</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color fase3"></div>
+                <span><strong>Fase III:</strong> Construcción MVP</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color fase4"></div>
+                <span><strong>Fase IV:</strong> Pruebas y Cierre</span>
+            </div>
+        </div>
+
+        <div class="summary">
+            <h3>📋 Resumen Académico</h3>
+            <p><strong>Febrero–Marzo:</strong> Investigación intensiva, revisión de literatura y construcción del marco teórico completo.</p>
+            <p><strong>Abril–Mayo:</strong> Diseño detallado de la solución aplicando ingeniería de software (requerimientos, arquitectura, UML, wireframes).</p>
+            <p><strong>Mayo–Junio:</strong> Desarrollo del MVP funcional con todos los módulos integrados (tablero, bloques, motor, niveles, estadísticas, roles).</p>
+            <p><strong>Final de Junio:</strong> Pruebas exhaustivas, correcciones de errores y despliegue en servidor institucional.</p>
+        </div>
+    </div>
+</body>
+</html>
